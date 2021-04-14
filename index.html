@@ -1,0 +1,149 @@
+<html>
+    <head>
+        <style>            
+            canvas {                
+                background-color: lightblue;
+            }
+        </style>
+    </head>
+<body>    
+    <div style="text-align: center;">
+        <h1>Tariffplan</h1>
+    <canvas id="weekplan" width="690" height="530">
+    </canvas>
+    </div>
+
+    <script>
+        
+        class Weekplan {
+            
+            canvas = null;  
+            ctx = null;          
+            squares = [];
+            squaresize = 20;
+            margin = 2;
+            marginbetweendays = 25;
+            width = 0;
+            height = 0;             
+            drag = false;
+            sel = {
+                x: 0,
+                y: 0,
+                w: 0,
+                h: 0,                
+            };               
+            activeTariffModel = {
+                uuid: "u1",
+                color: "blue"
+            }                        
+            getMousePosition(ev) {
+                const rect = this.canvas.getBoundingClientRect();
+                let x = ev.clientX - rect.left;
+                let y = ev.clientY - rect.top;
+                return {x,y};                                
+            }
+            onMouseMove(ev) {                
+                if(this.drag) {                    
+                    const {x,y} = this.getMousePosition(ev);
+                    this.sel.w = x-this.sel.x
+                    this.sel.h = y-this.sel.y;
+                    this.ctx.clearRect(this.sel.x, this.sel.y, this.sel.w, this.sel.h);
+                    this.draw();
+                    this.drawSelection();                    
+                }
+                
+            }
+            onMouseDown(ev) {                
+                this.drag = true;                                
+                const {x,y} = this.getMousePosition(ev);
+            
+                this.sel = {x:x, y:y, w:1, h:1, tm: this.activeTariffModel};
+                this.drawSelection();                
+            }
+            drawSelection() {
+                this.ctx.fillStyle = 'rgba(255,0,255, 0.1)';
+                this.ctx.fillRect(this.sel.x, this.sel.y, this.sel.w, this.sel.h);                
+            }
+            clearSelection() {
+                this.ctx.clearRect(this.sel.x, this.sel.y, this.sel.w, this.sel.h);
+            }
+            onMouseUp(ev) {                       
+                this.drag = false;                
+                this.squares = this.squares.map(s => {
+                    const {x,y,w,h, tm} = this.sel;
+                    if (
+                        x < s.x + s.w && x+w > s.x &&
+                        y < s.y + s.h && y+h > s.y                        
+                    ) 
+                    return { ...s, tariffmodel: tm}
+                    else return s;
+                });
+                
+                this.draw();
+            }            
+            onMouseLeave(ev) {
+                this.drag = false;
+                this.draw();
+            }
+
+            constructor() {                
+                
+                this.canvas = document.getElementById('weekplan');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this), false);
+                this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+                this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this), false);                
+                this.canvas.addEventListener('mouseleave', this.onMouseLeave.bind(this), false);
+
+                this.width = 8*this.marginbetweendays+7*4*this.squaresize + 7*3*this.margin;
+                this.height = 2*this.marginbetweendays+24*this.squaresize + 23*this.margin;
+                
+                let dayx = this.marginbetweendays;
+                for(let day = 0; day<7; day++) {
+                    let y = this.marginbetweendays;
+                    let x = dayx;
+                    for (let id = 0; id < 96; id ++) {
+                        if (id >0 && id % 4 === 0) {
+                            x = dayx;
+                            y += (this.squaresize+this.margin)
+                        }
+                        this.squares.push({
+                            day: day,
+                            id: id,
+                            x: x, 
+                            y: y,
+                            w: this.squaresize, 
+                            h: this.squaresize,
+                            tariffmodel: { uuid: "u1", color: "white" }
+                        })
+                        x += (this.squaresize+this.margin)                        
+                    }
+                    dayx += 4*this.squaresize+3*this.margin+this.marginbetweendays
+                }
+                this.draw();
+            }            
+
+            draw() {
+                this.ctx.canvas.width = this.width;
+                this.ctx.canvas.height = this.height;                
+                this.squares.forEach(square => {                    
+                    this.ctx.fillStyle = square.tariffmodel.color;
+                    const {x,y,w,h} = square;
+                    this.ctx.fillRect(x,y,w,h);                    
+                });                
+            }
+        }            
+        
+        window.onload = () => {
+            let wp = new Weekplan(); 
+            wp.activeTariffModel = {uuid:"u5",color:"orange"};                   
+            setTimeout(()=>{
+                wp.activeTariffModel = {uuid:"u6",color:"red"};                   
+            },5000)
+        }        
+        
+    </script>
+
+</body>
+</html>
+
