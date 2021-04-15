@@ -2,7 +2,7 @@
     <head>
         <style>            
             canvas {                
-                background-color: lightblue;
+                background-color: #eeeeee;
             }
         </style>
     </head>
@@ -23,6 +23,9 @@
             squaresize = 20;
             margin = 2;
             marginbetweendays = 25;
+            verticalmargin = 25;
+            leftmargin = 40;
+
             width = 0;
             height = 0;             
             drag = false;
@@ -95,13 +98,15 @@
                 this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this), false);                
                 this.canvas.addEventListener('mouseleave', this.onMouseLeave.bind(this), false);
 
-                this.width = 8*this.marginbetweendays+7*4*this.squaresize + 7*3*this.margin;
-                this.height = 2*this.marginbetweendays+24*this.squaresize + 23*this.margin;
+                this.width = this.leftmargin+8*this.marginbetweendays+7*4*this.squaresize + 7*3*this.margin;
+                this.height = 2*this.verticalmargin+2*this.marginbetweendays+24*this.squaresize + 23*this.margin;
                 
-                let dayx = this.marginbetweendays;
+                let dayx = this.leftmargin+this.marginbetweendays;
+                
                 for(let day = 0; day<7; day++) {
-                    let y = this.marginbetweendays;
+                    let y = this.verticalmargin+ this.marginbetweendays;
                     let x = dayx;
+                    this.weekdayxoffsets[day] = dayx
                     for (let id = 0; id < 96; id ++) {
                         if (id >0 && id % 4 === 0) {
                             x = dayx;
@@ -121,11 +126,39 @@
                     dayx += 4*this.squaresize+3*this.margin+this.marginbetweendays
                 }
                 this.draw();
-            }            
+            }
+            weekdayxoffsets=[];
 
             draw() {
                 this.ctx.canvas.width = this.width;
-                this.ctx.canvas.height = this.height;                
+                this.ctx.canvas.height = this.height;
+                
+                let weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+                let minutes = ['00','15','30','45'];
+                let hours = [
+                    '00:00','01:00','02:00','03:00','04:00','05:00','06:00','07:00','08:00','09:00','10:00','11:00',
+                    '12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00','23:00'
+                ];
+
+                this.ctx.font = '12px Arial';
+                this.ctx.fillStyle = 'black';
+                for(let i=0;i<7;i++) {
+                    this.ctx.fillText(weekdays[i], this.weekdayxoffsets[i], 20);
+                    let x = this.weekdayxoffsets[i]
+                    for(let j=0;j<4;j++) {
+                        this.ctx.fillText(minutes[j],x,40)
+                        x+=(this.squaresize+this.margin)
+                    }
+                }
+
+                let x = 20;
+                let y = this.squares[0].y+this.squaresize/2
+                this.ctx.textBaseline = 'middle';
+                for(let i=0; i<24; i++) {
+                    this.ctx.fillText(hours[i], x, y)
+                    y += (this.squaresize+this.margin)                    
+
+                }                
                 this.squares.forEach(square => {                    
                     this.ctx.fillStyle = square.tariffmodel.color;
                     const {x,y,w,h} = square;
